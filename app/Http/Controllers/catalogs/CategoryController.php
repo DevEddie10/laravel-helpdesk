@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\catalogs;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateCategoryRequest;
 use App\Models\Category;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
 {
@@ -16,119 +15,42 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $categories = Category::all();
-
-        if ($categories):
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'categories' => $categories,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'categories' => Category::all(),
+        ], 201);
     }
 
-    public function store(Request $request)
+    public function store(CreateCategoryRequest $request)
     {
-        if (!empty($request)):
-            $validated = Validator::make($request->all(), [
-                'name' => 'required',
-                'description' => 'required',
-            ]);
-
-            if ($validated->fails()):
-                $data = array(
-                    'status' => 'warning',
-                    'code' => 404,
-                    'errors' => $validated->errors(),
-                );
-            else:
-                $create = Category::create($request->all());
-                $data = array(
-                    'status' => 'success',
-                    'message' => 'La categoría se ha creado correctamente',
-                    'code' => 200,
-                    'category' => $create,
-                );
-            endif;
-        else:
-            $data = array(
-                'status' => 'warning',
-                'code' => 404,
-                "message" => 'No hay enviado nada al formulario',
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'category' => Category::create($request->all()),
+            'message' => 'La categoría se ha creado correctamente',
+        ], 201);
     }
 
-    public function show($id)
+    public function show(Category $categoria)
     {
-        $categoryId = Category::find($id);
-
-        if ($categoryId):
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'category' => $categoryId,
-            );
-        else:
-            $data = array(
-                'status' => 'warning',
-                'code' => 404,
-                "message" => 'No existe la categoría',
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'category' => $categoria,
+        ], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Category $categoria, CreateCategoryRequest $request)
     {
-        $category = Category::find($id);
-
-        if (!empty($request)):
-            $validated = Validator::make($request->all(), [
-                'name' => 'required',
-                'description' => 'required',
-            ]);
-
-            if ($validated->fails()):
-                $data = array(
-                    'status' => 'warning',
-                    'code' => 404,
-                    'errors' => $validated->errors(),
-                );
-            else:
-                $category->update($request->all());
-                $data = array(
-                    'status' => 'success',
-                    'message' => 'La categoría se ha editado correctamente',
-                    'code' => 200,
-                    'category' => $category,
-                );
-            endif;
-        else:
-            $data = array(
-                'status' => 'warning',
-                'code' => 404,
-                "message" => 'No hay enviado nada al formulario',
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
-    }
-
-    public function destroy($id)
-    {
-        $categoryId = Category::find($id);
-        $categoryId->delete();
+        $categoria->update($request->all());
 
         return response()->json([
-            'status' => 'success',
-            'code' => 200,
+            'category' => $categoria,
+            'message' => 'La categoría se ha editado correctamente',
+        ], 201);
+    }
+
+    public function destroy(Category $categoria)
+    {
+        $categoria->delete();
+
+        return response()->json([
             'message' => 'Se ha eliminado la categoría correctamente',
-        ], 200);
+        ], 201);
     }
 }
