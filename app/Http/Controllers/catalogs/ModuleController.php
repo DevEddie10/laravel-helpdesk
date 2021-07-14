@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers\catalogs;
 
-use App\Models\Module;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\StatusCatalogRequest;
+use App\Models\Module;
 
 class ModuleController extends Controller
 {
@@ -16,123 +15,40 @@ class ModuleController extends Controller
 
     public function index()
     {
-        $modules = Module::all();
-
-        if ($modules):
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'modules' => $modules,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'modules' => Module::all(),
+        ], 201);
     }
 
-    public function store(Request $request)
+    public function store(StatusCatalogRequest $request)
     {
-        if (!empty($request->all())):
-            $validated = Validator::make($request->all(), [
-                'name' => 'required',
-                'description' => 'required',
-                'status' => 'required',
-            ]);
-
-            if ($validated->fails()):
-                $data = array(
-                    'status' => 'warning',
-                    'code' => 404,
-                    'errors' => $validated->errors(),
-                );
-            else:
-                $create = Module::create($request->all());
-
-                $data = array(
-                    'status' => 'success',
-                    'message' => 'Modulo creado correctamente',
-                    'code' => 200,
-                    'module' => $create,
-                );
-            endif;
-        else:
-            $data = array(
-                'status' => 'error',
-                'message' => 'No se ha enviando nada al formulario',
-                'code' => 404,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'message' => 'Modulo creado correctamente',
+            'module' => Module::create($request->all()),
+        ], 201);
     }
 
-    public function show($id)
+    public function show(Module $modulo)
     {
-        $moduleId = Module::find($id);
-
-        if ($moduleId):
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'modulo' => $moduleId,
-            );
-        else:
-            $data = array(
-                'status' => 'error',
-                'message' => 'El modulo no existe',
-                'code' => 404,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['modulo' => $modulo]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Module $modulo, StatusCatalogRequest $request)
     {
-        $module = Module::find($id);
-
-        if (!empty($request->all())):
-            $validated = Validator::make($request->all(), [
-                'name' => 'required',
-                'description' => 'required',
-                'status' => 'required',
-            ]);
-
-            if ($validated->fails()):
-                $data = array(
-                    'status' => 'warning',
-                    'code' => 404,
-                    'errors' => $validated->errors(),
-                );
-            else:
-                $module->update($request->all());
-
-                $data = array(
-                    'status' => 'success',
-                    'message' => 'Modulo creado correctamente',
-                    'code' => 200,
-                    'module' => $module,
-                );
-            endif;
-        else:
-            $data = array(
-                'status' => 'error',
-                'message' => 'No se ha enviando nada al formulario',
-                'code' => 404,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
-    }
-
-    public function destroy($id)
-    {
-        $moduleId = Module::find($id);
-        $moduleId->delete();
+        $modulo->update($request->all());
 
         return response()->json([
-            'status' => 'success',
-            'code'   => 200,
-            'message' => 'Se ha eliminado el modulo correctamente'
-        ], 200);
+            'message' => 'Modulo creado correctamente',
+            'module' => $modulo,
+        ]);
+    }
+
+    public function destroy(Module $modulo)
+    {
+        $modulo->delete();
+
+        return response()->json([
+            'message' => 'Se ha eliminado el modulo correctamente',
+        ], 201);
     }
 }

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\catalogs;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StatusCatalogRequest;
 use App\Models\State;
-use Illuminate\Support\Facades\Validator;
 
 class StateController extends Controller
 {
@@ -15,126 +15,39 @@ class StateController extends Controller
 
     public function index()
     {
-        $states = State::all();
-
-        if ($states):
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'states' => $states,
-            );
-
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['states' => State::all()], 201);
     }
 
-    public function store()
+    public function store(StatusCatalogRequest $request)
     {
-        $params = $this->getPost();
-
-        if (!empty($params)):
-            $validated = Validator::make($params, [
-                'name' => 'required',
-                'description' => 'required',
-                'status' => 'required',
-            ]);
-
-            if ($validated->fails()):
-                $data = array(
-                    'status' => 'warning',
-                    'code' => 404,
-                    'errors' => $validated->errors(),
-                );
-            else:
-                $create = State::create($params);
-                $data = array(
-                    'status' => 'success',
-                    'message' => 'Estado creado correctamente.',
-                    'code' => 200,
-                    'state' => $create,
-                );
-            endif;
-        else:
-            $data = array(
-                'status' => 'error',
-                'message' => 'No se han enviado datos al formulario.',
-                'code' => 404,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'state' => State::create($request->all()),
+            'message' => 'Estado creado correctamente.',
+        ], 201);
     }
 
-    public function show($id)
+    public function show(State $estado)
     {
-        $stateId = State::find($id, ['id', 'name', 'description']);
-
-        if ($stateId):
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'staet' => $stateId,
-            );
-        else:
-            $data = array(
-                'status' => 'warning',
-                'code' => 404,
-                "message" => 'No existe el estado',
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['state' => $estado]);
     }
 
-    public function update($id)
+    public function update(State $estado, StatusCatalogRequest $request)
     {
-        $params = $this->getPost();
-        $state = State::find($id);
-
-        if (!empty($params)):
-            $validated = Validator::make($params, [
-                'name' => 'required',
-                'description' => 'required',
-                'status' => 'required',
-            ]);
-
-            if ($validated->fails()):
-                $data = array(
-                    'status' => 'warning',
-                    'code' => 404,
-                    'errors' => $validated->errors(),
-                );
-            else:
-                $state->update($params);
-                $data = array(
-                    'status' => 'success',
-                    'message' => 'Estado editado correctamente',
-                    'code' => 200,
-                    'state' => $state,
-                );
-            endif;
-        else:
-            $data = array(
-                'status' => 'warning',
-                'code' => 404,
-                "message" => 'No hay enviado nada al formulario',
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
-    }
-
-    public function destroy($id)
-    {
-        $mediaId = State::find($id);
-        $mediaId->delete();
+        $estado->update($request->all());
 
         return response()->json([
-            'status' => 'success',
-            'code' => 200,
+            'state' => $estado,
+            'message' => 'Estado editado correctamente',
+        ], 201);
+    }
+
+    public function destroy(State $estado)
+    {
+        $estado->delete();
+
+        return response()->json([
             'message' => 'Se ha eliminado correctamente',
-        ], 200);
+        ], 201);
     }
 
     public function allPriorityState($id)
@@ -143,21 +56,6 @@ class StateController extends Controller
             'status' => $id,
         ])->get(['id', 'name']);
 
-        if ($priorities):
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'priorities' => $priorities,
-            );
-
-        endif;
-
-        return response()->json($data, $data['code']);
-    }
-
-    private function getPost()
-    {
-        $json = file_get_contents("php://input", null);
-        return json_decode($json, true);
+        return response()->json(['priorities' => $priorities], 201);
     }
 }

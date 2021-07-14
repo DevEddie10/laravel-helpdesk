@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\catalogs;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CreateCategoryRequest;
+use App\Http\Requests\CreateCatalogRequest;
 use App\Models\Category;
 
 class CategoryController extends Controller
@@ -20,7 +20,7 @@ class CategoryController extends Controller
         ], 201);
     }
 
-    public function store(CreateCategoryRequest $request)
+    public function store(CreateCatalogRequest $request)
     {
         return response()->json([
             'category' => Category::create($request->all()),
@@ -35,7 +35,7 @@ class CategoryController extends Controller
         ], 201);
     }
 
-    public function update(Category $categoria, CreateCategoryRequest $request)
+    public function update(Category $categoria, CreateCatalogRequest $request)
     {
         $categoria->update($request->all());
 

@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\catalogs;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StatusCatalogRequest;
 use App\Models\Solution;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class SolutionController extends Controller
 {
@@ -16,123 +15,40 @@ class SolutionController extends Controller
 
     public function index()
     {
-        $solutions = Solution::all();
-
-        if ($solutions):
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'solutions' => $solutions
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'solutions' => Solution::all(),
+        ], 201);
     }
 
-    public function store(Request $request)
+    public function store(StatusCatalogRequest $request)
     {
-        if (!empty($request)):
-            $validated = Validator::make($request->all(), [
-                'name' => 'required',
-                'description' => 'required',
-                'status' => 'required',
-            ]);
-
-            if ($validated->fails()):
-                $data = array(
-                    'status' => 'warning',
-                    'code' => 404,
-                    'errors' => $validated->errors(),
-                );
-            else:
-                $create = Solution::create($request->all());
-
-                $data = array(
-                    'status' => 'success',
-                    'message' => 'Solucion creado correctamente',
-                    'code' => 200,
-                    'solucion' => $create,
-                );
-            endif;
-        else:
-            $data = array(
-                'status' => 'error',
-                'message' => 'No se ha enviado nada al formulario',
-                'code' => 404,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'solucion' => Solution::create($request->all()),
+            'message' => 'Solucion creado correctamente'
+        ], 201);
     }
 
-    public function show($id)
+    public function show(Solution $solucione)
     {
-        $solucionId = Solution::find($id);
-
-        if ($solucionId):
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'solucion' => $solucionId,
-            );
-        else:
-            $data = array(
-                'status' => 'error',
-                'message' => 'El modulo no existe',
-                'code' => 404,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['solucion' => $solucione], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Solution $solucione, StatusCatalogRequest $request)
     {
-        $solucion = Solution::find($id);
-
-        if (!empty($request)):
-            $validated = Validator::make($request->all(), [
-                'name' => 'required',
-                'description' => 'required',
-                'status' => 'required',
-            ]);
-
-            if ($validated->fails()):
-                $data = array(
-                    'status' => 'warning',
-                    'code' => 404,
-                    'errors' => $validated->errors(),
-                );
-            else:
-                $solucion->update($request->all());
-
-                $data = array(
-                    'status' => 'success',
-                    'message' => 'Solución creado correctamente',
-                    'code' => 200,
-                    'solucion' => $solucion,
-                );
-            endif;
-        else:
-            $data = array(
-                'status' => 'error',
-                'message' => 'No se ha enviando nada al formulario',
-                'code' => 404,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        $solucione->update($request->all());
+        
+        return response()->json([
+            'solucion' => $solucione,
+            'message' => 'Solución creado correctamente'
+        ], 201);
     }
 
-    public function destroy($id)
+    public function destroy(Solution $solucione)
     {
-        $solucionId = Solution::find($id);
-        $solucionId->delete();
+        $solucione->delete();
 
         return response()->json([
-            'status' => 'success',
-            'code' => 200,
             'message' => 'Se ha eliminado la solucion correctamente',
-        ], 200);
+        ], 201);
     }
 }
