@@ -4,9 +4,8 @@ namespace App\Http\Controllers\role;
 
 use App\Helpers\JwtAuth;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRoleRequest;
 use App\Models\Role;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class RoleController extends Controller
 {
@@ -25,119 +24,35 @@ class RoleController extends Controller
 
         $roles = Role::where([
             'id' => 3,
-        ])->with('user', function ($query) use ($decoded) {
-            return $query->where('id', '!=', $decoded->sub);
-        })->get();
+        ])->with('user', fn($query) => $query->where('id', '!=', $decoded->sub))->get();
 
-        if ($roles):
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'roles' => $roles,
-            ];
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['roles' => $roles], 201);
     }
 
-    public function store(Request $request)
+    public function store(StoreRoleRequest $request)
     {
-        $validated = Validator::make($request->all(), [
-            'name' => 'required',
-            'display_name' => 'required',
-            'description' => 'required',
-        ]);
-
-        if ($validated->fails()):
-            $data = array(
-                'status' => 'warning',
-                'code' => 404,
-                'errors' => $validated->errors(),
-            );
-        else:
-            $result = Role::create($request->all());
-
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'message' => 'Se ha creado Role',
-                'role' => $result,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'message' => 'Se ha creado el role correctamente',
+            'role' => Role::create($request->all())
+        ]);    
     }
 
-    public function show($id)
+    public function show(Role $role)
     {
-        $role = Role::find($id);
-
-        if ($role):
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'role' => $role,
-            ];
-        else:
-            $data = [
-                'status' => 'error',
-                'message' => 'El role no existe',
-                'code' => 404,
-            ];
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['role' => $role], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Role $role, StoreRoleRequest $request)
     {
-        $role = Role::find($id);
+        $role->update($request->all());
 
-        $validated = Validator::make($request->all(), [
-            'name' => 'required',
-            'display_name' => 'required',
-            'description' => 'required',
-        ]);
-
-        if ($validated->fails()) {
-            $data = array(
-                'status' => 'warning',
-                'code' => 404,
-                'errors' => $validated->errors(),
-            );
-        } else {
-            $role->update($request->all());
-
-            $data = array(
-                'status' => 'success',
-                'code' => 200,
-                'role' => $role,
-            );
-        }
-
-        return response()->json($data, $data['code']);
+        return response()->json(['role' => $role], 201);
     }
 
-    public function destroy($id)
+    public function destroy(Role $role)
     {
-        $role = Role::find($id);
+        $role->delete();
 
-        if ($role):
-            $role->delete();
-
-            $data = array(
-                'status' => 'success',
-                'message' => 'Role eliminado correctamente',
-                'code' => 200,
-            );
-        else:
-            $data = array(
-                'status' => 'error',
-                'message' => 'El role no existe',
-                'code' => 404,
-            );
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['message' => 'Se ha eliminado el role correctamente']);
     }
 }

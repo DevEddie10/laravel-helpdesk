@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PruebaController;
 use App\Http\Controllers\role\RoleController;
 use App\Http\Controllers\user\UserController;
 use App\Http\Controllers\login\LoginController;
@@ -30,7 +29,6 @@ Route::apiResources([
     '/api/soluciones' => SolutionController::class,
     '/api/asignaciones' => SpecialistController::class,
     '/api/notificaciones' => NotificationsController::class,
-    '/ordenamiento' => PruebaController::class
 ]);
 
 Route::get('/api/prioridad/{id}', [StateController::class, 'allPriorityState']);

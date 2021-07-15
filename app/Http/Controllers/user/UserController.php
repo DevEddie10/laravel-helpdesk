@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\user;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -20,118 +19,43 @@ class UserController extends Controller
         $users = User::orderBy('id', 'desc')
             ->with('roles')->get();
 
-        if ($users):
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'users' => $users,
-            ];
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['users' => $users], 201);
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        if (!empty($request->all())):
-            $validate = Validator::make($request->all(), [
-                'name' => ['required', 'string', 'max:50'],
-                'email' => ['required', 'string', 'email', 'max:50', 'unique:users'],
-                //'password' => ['required', 'string', 'min:6'],
-            ]);
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make('admin_23'),
+        ]);
 
-            if ($validate->fails()):
-                $data = [
-                    'status' => 'info',
-                    'code' => 404,
-                    'errors' => $validate->errors(),
-                ];
-            else:
-                $user = User::create([
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'password' => Hash::make('admin_23'),
-                ]);
-
-                $data = [
-                    'status' => 'success',
-                    'code' => 200,
-                    'message' => 'Usuario creado correctamente.',
-                    'user' => $user,
-                ];
-            endif;
-        else:
-            $data = [
-                'status' => 'error',
-                'code' => 404,
-                'message' => 'El formulario esta vacio.',
-            ];
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json([
+            'message' => 'Usuario creado correctamente.',
+            'user' => $user,
+        ], 201);
     }
 
-    public function show($id)
+    public function show(User $usuario)
     {
-        $user = User::with('roles')->find($id);
-
-        if ($user):
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'user' => $user,
-            ];
-        else:
-            $data = [
-                'status' => 'error',
-                'message' => 'No se encontro el usuario',
-                'code' => 404,
-            ];
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['user' => $usuario]);
     }
 
-    public function update(Request $request, $id)
+    public function update(User $usuario, StoreUserRequest $request)
     {
-        $user = User::find($id);
-
-        $user->update([
+        $usuario->update([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        $data = [
-            'status' => 'success',
-            'message' => 'Usuario editado correctamente',
-            'code' => 200,
-            'user' => $user
-        ];
-
-        return response()->json($data, $data['code']);
+        return response()->json(['user' => $usuario]);
     }
 
-    public function destroy($id)
+    public function destroy(User $usuario)
     {
-        $user = User::find($id);
+        $usuario->delete();
 
-        if ($user):
-            $user->delete();
-
-            $data = [
-                'status' => 'success',
-                'message' => 'Usuario eliminado correctamente',
-                'code' => 200,
-            ];
-        else:
-            $data = [
-                'status' => 'error',
-                'message' => 'El usuario no existe',
-                'code' => 404,
-            ];
-        endif;
-
-        return response()->json($data, $data['code']);
+        return response()->json(['message' => 'Se ha eliminado el usuario correctamente']);
     }
 }
