@@ -8,7 +8,7 @@ use UnexpectedValueException;
 
 class JwtAuth
 {
-    public $key;
+    private $key;
 
     public function __construct()
     {
@@ -27,9 +27,9 @@ class JwtAuth
             $token = array(
                 'sub' => $user->id,
                 'email' => $user->email,
-                'name'  => $user->name,
+                'name' => $user->name,
                 'iat' => time(),
-                'exp' => time() + (60*60)
+                'exp' => time() + (60 * 60),
             );
 
             $jwt = JWT::encode($token, $this->key, 'HS256');
@@ -41,10 +41,10 @@ class JwtAuth
                 $data = $decoded;
             endif;
         else:
-            $data = array(
+            $data = [
                 'status' => 'error',
                 'message' => 'Login incorrecto'
-            );
+            ];
         endif;
 
         return $data;
@@ -58,7 +58,7 @@ class JwtAuth
             $decoded = JWT::decode($jwt, $this->key, ['HS256']);
         } catch (UnexpectedValueException $e) {
             $auth = false;
-        } catch(DomainException $e) {
+        } catch (DomainException $e) {
             $auth = false;
         }
 
@@ -68,7 +68,9 @@ class JwtAuth
             $auth = false;
         endif;
 
-        if ($getIdentity) return $decoded;
+        if ($getIdentity) {
+            return $decoded;
+        }
 
         return $auth;
     }

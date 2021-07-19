@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\tickets;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AssingSpecialistRequest;
+use App\Http\Requests\CreateTicketRequest;
+use App\Http\Requests\ReactiveTicketRequest;
+use App\Models\Assign;
 use App\Repositories\Assignments;
-use Illuminate\Http\Request;
 
 class AssignedController extends Controller
 {
-    private $token;
     protected $assignment;
 
     public function __construct(Assignments $assignment)
@@ -19,57 +21,57 @@ class AssignedController extends Controller
 
     public function index()
     {
-        $data = $this->assignment->getTickets();
+        $assigned = $this->assignment->getTickets();
 
-        return response()->json($data, $data['code']);
+        return response()->json(['tickets' => $assigned], 201);
     }
 
-    public function store(Request $request)
+    public function store(CreateTicketRequest $request)
     {
-        $data = $this->assignment->createTicket($request);
+        $assigned = $this->assignment->createTicket($request);
 
-        return response()->json($data, $data['code']);
+        return response()->json($assigned, 201);
     }
 
-    public function show($id)
+    public function show(int $id)
     {
-        $data = $this->assignment->getTicket($id);
+        $assigned = $this->assignment->getTicket($id);
 
-        return response()->json($data, $data['code']);
+        return response()->json(['assigned' => $assigned], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(AssingSpecialistRequest $request, Assign $ticket)
     {
-        $data = $this->assignment->assingSpecialist($request, $id);
+        $assigned = $this->assignment->assingSpecialist($request, $ticket);
 
-        return response()->json($data, $data['code']);
+        return response()->json($assigned, 201);
     }
 
-    public function monitoringTicket($id)
+    public function monitoringTicket(int $id)
     {
-        $data = $this->assignment->monitoringTicket($id);
+        $assigned = $this->assignment->monitoringTicket($id);
 
-        return response()->json($data, $data['code']);
+        return response()->json(['assignments' => $assigned]);
     }
 
     public function endupTicket($id)
     {
-        $data = $this->assignment->endupTicket($id);
+        $assigned = $this->assignment->endupTicket($id);
+
+        return response()->json(['result' => $assigned]);
+    }
+
+    public function reactivateTicket(ReactiveTicketRequest $request, Assign $assign)
+    {
+        $data = $this->assignment->reactivate($request, $assign);
 
         return response()->json($data, $data['code']);
     }
 
-    public function reactivateTicket(Request $request, $id)
+    public function finishedTicket(ReactiveTicketRequest $request, Assign $assign)
     {
-        $data = $this->assignment->reactivate($request, $id);
+        $assigned = $this->assignment->finished($request, $assign);
 
-        return response()->json($data, $data['code']);
-    }
-
-    public function finishedTicket(Request $request, $id)
-    {
-        $data = $this->assignment->finished($request, $id);
-
-        return response()->json($data, $data['code']);
+        return response()->json($assigned, $assigned['code']);
     }
 }

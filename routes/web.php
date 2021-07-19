@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NewController;
 use App\Http\Controllers\role\RoleController;
 use App\Http\Controllers\user\UserController;
 use App\Http\Controllers\login\LoginController;
@@ -35,8 +36,8 @@ Route::get('/api/prioridad/{id}', [StateController::class, 'allPriorityState']);
 Route::put('/api/reasignar/{id}', [SpecialistController::class, 'reasignTicket']);
 Route::get('/api/monitoreo/{id}', [AssignedController::class, 'monitoringTicket']);
 Route::get('/api/terminar/{id}', [AssignedController::class, 'endupTicket']);
-Route::put('/api/reactivar/{id}', [AssignedController::class, 'reactivateTicket']);
-Route::put('/api/finalizado/{id}', [AssignedController::class, 'finishedTicket']);
+Route::put('/api/reactivar/{assign}', [AssignedController::class, 'reactivateTicket']);
+Route::put('/api/finalizado/{assign}', [AssignedController::class, 'finishedTicket']);
 
 Route::put('/api/asnotificacion/{id}', [NotificationsController::class, 'markAsRead']);
 Route::put('/api/allnotificacion/{id}', [NotificationsController::class, 'markAllasRead']);

@@ -2,11 +2,8 @@
 
 namespace App\Repositories;
 
-use App\Models\User;
-use App\Models\Assign;
 use App\Helpers\JwtAuth;
-use App\Notifications\TicketSent;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Assign;
 
 class Assignments implements AssignmentsInterface
 {
@@ -19,57 +16,24 @@ class Assignments implements AssignmentsInterface
 
     public function getTickets()
     {
-        $allTickets = Assign::where([
+        return Assign::where([
             'status' => 1,
         ])
             ->orderBy('id', 'desc')
             ->with(['user', 'category', 'medio', 'state'])->get();
-
-        if ($allTickets):
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'tickets' => $allTickets,
-            ];
-        endif;
-
-        return $data;
     }
 
     public function createTicket($request)
     {
-        $validated = Validator::make($request->all(), [
-            'user_id' => 'required',
-            'category_id' => 'required',
-            'media_id' => 'required',
-            'state_id' => 'required',
-            'description' => 'required',
-            'status' => 'required',
-        ]);
-
-        if ($validated->fails()):
-            $data = [
-                'status' => 'warning',
-                'code' => 404,
-                'errors' => $validated->errors(),
-            ];
-        else:
-            $ticketAssign = Assign::create($request->all());
-
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'message' => 'Se ha creado el ticket correctamente',
-                'ticket' => $ticketAssign,
-            ];
-        endif;
-
-        return $data;
+        return [
+            'ticket' => Assign::create($request->all()),
+            'message' => 'Se ha creado el ticket correctamente',
+        ];
     }
 
     public function getTicket($id)
     {
-        $assignedId = Assign::where([
+        return Assign::where([
             'user_id' => $id,
         ])
             ->orderBy('id', 'desc')
@@ -77,62 +41,24 @@ class Assignments implements AssignmentsInterface
             ->get(['id', 'user_id', 'category_id', 'media_id',
                 'state_id', 'assigned_id', 'description', 'status',
             ]);
-
-        $data = [
-            'status' => 'success',
-            'code' => 200,
-            'assigned' => $assignedId,
-        ];
-
-        return $data;
     }
 
-    public function assingSpecialist($request, $id)
+    public function assingSpecialist($request, $ticket)
     {
-        $ticketId = Assign::find($id);
+        $ticket->update([
+            'assigned_id' => $request->assigned_id,
+            'status' => 2,
+        ]);
 
-        if ($ticketId):
-            $validated = Validator::make($request->all(), [
-                'assigned_id' => 'required',
-            ]);
-
-            if ($validated->fails()):
-                $data = [
-                    'status' => 'warning',
-                    'code' => 404,
-                    'errors' => $validated->errors(),
-                ];
-            else:
-                $ticketId->update([
-                    'assigned_id' => $request->assigned_id,
-                    'status' => 2,
-                ]);
-                $ticketId['message'] = "Tienes asignado un ticket";
-
-                $notification = User::find($request->assigned_id);
-                $notification->notify(new TicketSent($ticketId));
-
-                $data = [
-                    'status' => 'success',
-                    'code' => 200,
-                    'message' => 'El ticket se ha asignado',
-                    'ticket' => $ticketId
-                ];
-            endif;
-        else:
-            $data = [
-                'status' => 'error',
-                'code' => 404,
-                'message' => 'No existe el id del ticket',
-            ];
-        endif;
-
-        return $data;
+        return [
+            'message' => 'El ticket se ha asignado',
+            'ticket' => $ticket,
+        ];
     }
 
     public function monitoringTicket($id)
     {
-        $assignments = Assign::where([
+        return Assign::where([
             'status' => $id,
         ])
             ->orderBy('id', 'desc')
@@ -140,21 +66,11 @@ class Assignments implements AssignmentsInterface
             ->get(['id', 'user_id', 'category_id', 'media_id',
                 'state_id', 'description', 'assigned_id', 'status',
             ]);
-
-        if ($assignments):
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'assignments' => $assignments,
-            ];
-        endif;
-
-        return $data;
     }
 
     public function endupTicket($id)
     {
-        $result = Assign::where([
+        return Assign::where([
             'id' => $id,
             'status' => 4,
         ])
@@ -165,114 +81,45 @@ class Assignments implements AssignmentsInterface
                 'state_id', 'description', 'assigned_id',
                 'modulo_id', 'solution_id', 'status',
             ]);
-
-        if ($result):
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'result' => $result,
-            ];
-        endif;
-
-        return $data;
     }
 
-    public function reactivate($request, $id)
+    public function reactivate($request, $assign)
     {
-        $reactivate = Assign::find($id);
+        $assign->update(['status' => 6]);
 
-        if (!$reactivate):
-            return $data = [
-                'status' => 'error',
-                'code' => 404,
-                'message' => 'No existe el ticket',
-            ];
-        endif;
+        $jwt = new JwtAuth();
+        $decoded = $jwt->checkToken($this->token, true);
 
-        $validated = Validator::make($request->all(), [
-            'description' => 'required',
-            'status' => 'required',
+        $assign->commentaries()->create([
+            'description' => $request->description,
+            'status' => $request->status,
+            'assigned_id' => $decoded->sub,
         ]);
 
-        if ($validated->fails()):
-            $data = [
-                'status' => 'warning',
-                'code' => 404,
-                'errors' => $validated->errors(),
-            ];
-        else:
-            $reactivate->status = 6;
-            $reactivate->save();
-
-            $jwt = new JwtAuth();
-            $decoded = $jwt->checkToken($this->token, true);
-
-            $reactivate->commentaries()->create([
-                'description' => $request->description,
-                'status' => $request->status,
-                'assigned_id' => $decoded->sub,
-            ]);
-
-            $reactivate['message'] = 'Tienes un ticket reactivado';
-
-            $notification = User::find($reactivate->assigned_id);
-            $notification->notify(new TicketSent($reactivate));
-
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'message' => 'El ticket se ha reactivado',
-                'ticket' => $reactivate,
-            ];
-        endif;
-
-        return $data;
+        return [
+            'message' => 'El ticket se ha reactivado',
+            'ticket' => $assign,
+            'code' => 201,
+        ];
     }
 
-    public function finished($request, $id)
+    public function finished($request, $assigned)
     {
-        $finished = Assign::find($id);
+        $assigned->update(['status' => 7]);
 
-        if (!$finished):
-            return $data = [
-                'status' => 'error',
-                'code' => 404,
-                'message' => 'No existe el ticket',
-            ];
-        endif;
+        $jwt = new JwtAuth();
+        $decoded = $jwt->checkToken($this->token, true);
 
-        $validated = Validator::make($request->all(), [
-            'description' => 'required',
-            'status' => 'required',
+        $assigned->commentaries()->create([
+            'description' => $request->description,
+            'status' => $request->status,
+            'assigned_id' => $decoded->sub,
         ]);
 
-        if ($validated->fails()):
-            $data = [
-                'status' => 'warning',
-                'code' => 404,
-                'errors' => $validated->errors(),
-            ];
-        else:
-            $finished->status = 7;
-            $finished->save();
-
-            $jwt = new JwtAuth();
-            $decoded = $jwt->checkToken($this->token, true);
-
-            $finished->commentaries()->create([
-                'description' => $request->description,
-                'status' => $request->status,
-                'assigned_id' => $decoded->sub,
-            ]);
-
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'message' => 'El ticket se ha terminado',
-                'ticket' => $finished,
-            ];
-        endif;
-
-        return $data;
+        return [
+            'message' => 'El ticket se ha terminado',
+            'ticket' => $assigned,
+            'code' => 201,
+        ];
     }
 }

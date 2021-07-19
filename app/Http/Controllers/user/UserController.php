@@ -38,7 +38,9 @@ class UserController extends Controller
 
     public function show(User $usuario)
     {
-        return response()->json(['user' => $usuario]);
+        return response()->json([
+            'user' => $usuario->with('roles')->find($usuario->id)
+        ]);
     }
 
     public function update(User $usuario, StoreUserRequest $request)
