@@ -2,12 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Models\User;
-use App\Models\Assign;
 use App\Helpers\JwtAuth;
+use App\Models\Assign;
 use App\Models\Commentary;
+use App\Models\User;
 use App\Notifications\TicketSent;
-use Illuminate\Support\Facades\Validator;
 
 class Specialists implements SpecialistInterface
 {
@@ -33,55 +32,23 @@ class Specialists implements SpecialistInterface
                 'state_id', 'description', 'status',
             ]);
 
-        if ($allTickets):
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'tickets' => $allTickets,
-            ];
-        else:
-            $data = [
-                'status' => 'error',
-                'code' => 404,
-                'message' => 'No tienes tickets asigandos',
-            ];
-        endif;
-
-        return $data;
+        return [
+            'tickets' => $allTickets,
+            'code' => 201
+        ];
     }
 
     public function createComment($request)
     {
-        $validated = Validator::make($request->all(), [
-            'description' => 'required',
-            'status' => 'required',
-            'assgment_id' => 'required',
-            'assigned_id' => 'required',
-        ]);
+        $commentary = Commentary::create($request->all());
+        $commentary->assigned()->sync($request->only('assgment_id'));
+        $commentary->assigned()->update(['status' => 3]);
 
-        if ($validated->fails()):
-            $data = [
-                'status' => 'info',
-                'code' => 404,
-                'errors' => $validated->errors(),
-            ];
-        else:
-            $commentary = Commentary::create($request->all());
-            $commentary->assigned()->sync($request->only('assgment_id'));
-
-            $commentary->assigned()->update([
-                'status' => 3,
-            ]);
-
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'message' => 'Seguimiento creado.',
-                'commentary' => $commentary
-            ];
-        endif;
-
-        return $data;
+        return [
+            'message' => 'Seguimiento creado.',
+            'commentary' => $commentary,
+            'code' => 201
+        ];
     }
 
     public function getComments($id)
@@ -99,155 +66,91 @@ class Specialists implements SpecialistInterface
         $decoded = $jwt->checkToken($this->token, true);
 
         if (!$specialist):
-            return $data = [
-                'status' => 'error',
-                'code' => 404,
+            return [
                 'message' => 'No existe el ticket',
+                'code' => 404,
             ];
         endif;
 
         if ($specialist->assigned_id !== $decoded->sub):
-            return $data = [
-                'status' => 'info',
-                'code' => 404,
+            return [
                 'message' => 'No tienes permiso para ejecutar esta accion',
+                'code' => 401,
             ];
         endif;
 
-        $data = [
-            'status' => 'success',
-            'code' => 200,
+        return [
             'ticket' => $specialist,
+            'code' => 201
         ];
-
-        return $data;
     }
 
-    public function saveTicket($request, $id)
+    public function saveTicket($request, $asignacione)
     {
-        $assing = Assign::find($id);
-
-        if (!$assing):
-            return $data = [
-                'status' => 'error',
-                'code' => 404,
-                'message' => 'No existe el ticket',
-            ];
-        endif;
-
         $jwt = new JwtAuth();
         $decoded = $jwt->checkToken($this->token, true);
 
-        if ($assing->assigned_id !== $decoded->sub):
-            return $data = [
-                'status' => 'info',
-                'code' => 404,
+        if ($asignacione->assigned_id !== $decoded->sub):
+            return [
                 'message' => 'No tienes permiso para ejecutar esta accion',
+                'code' => 401
             ];
         endif;
 
-        $validated = Validator::make($request->all(), [
-            'status_id' => 'required',
-            'modulo_id' => 'required',
-            'solution_id' => 'required',
-            'description' => 'required',
+        $asignacione->update([
+            'status_id' => $request->status_id,
+            'modulo_id' => $request->modulo_id,
+            'solution_id' => $request->solution_id,
+            'status' => 4
         ]);
 
-        if ($validated->fails()):
-            $data = [
-                'status' => 'error',
-                'code' => 404,
-                'errors' => $validated->errors(),
-            ];
-        else:
-            $assing->update([
-                'status_id' => $request->status_id,
-                'modulo_id' => $request->modulo_id,
-                'solution_id' => $request->solution_id,
-                'status' => 4,
-            ]);
+        $commentary = Commentary::create([
+            'description' => $request->description,
+            'assigned_id' => $asignacione->assigned_id,
+            'status' => 2
+        ]);
 
-            $commentary = Commentary::create([
-                'description' => $request->description,
-                'assigned_id' => $assing->assigned_id,
-                'status' => 2,
-            ]);
+        $commentary->assigned()->sync($asignacione->id);
 
-            $commentary->assigned()->sync($id);
-
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'ticket' => $assing,
-                'message' => 'El ticket se ha cerrado',
-                'commentary' => $commentary,
-            ];
-        endif;
-
-        return $data;
+        return [
+            'message' => 'El ticket se ha cerrado',
+            'ticket' => $asignacione,
+            'commentary' => $commentary,
+            'code' => 201
+        ];
     }
 
-    public function reassigned($request, $id)
+    public function reassigned($request, $reasign)
     {
-        $reasign = Assign::find($id);
-
-        if (!$reasign):
-            return $data = [
-                'status' => 'error',
-                'code' => 404,
-                'message' => 'No existe el ticket',
-            ];
-        endif;
-
         $jwt = new JwtAuth();
         $decoded = $jwt->checkToken($this->token, true);
 
         if ($reasign->assigned_id !== $decoded->sub):
-            return $data = [
-                'status' => 'info',
-                'code' => 404,
+            return [
                 'message' => 'No tienes permiso para ejecutar esta accion',
+                'code' => 401
             ];
         endif;
 
-        $validate = Validator::make($request->all(), [
-            'description' => 'required',
-            'assigned_id' => 'required',
+        $commentary = Commentary::create([
+            'description' => $request->description,
+            'assigned_id' => $decoded->sub,
+            'status' => 3,
+        ]);
+        $commentary->assigned()->sync($reasign->id);
+        $commentary->assigned()->update([
+            'assigned_id' => $request->assigned_id,
+            'status' => 5
         ]);
 
-        if ($validate->fails()):
-            $data = [
-                'status' => 'info',
-                'code' => 404,
-                'errors' => $validate->errors(),
-            ];
-        else:
-            $commentary = Commentary::create([
-                'description' => $request->description,
-                'assigned_id' => $decoded->sub,
-                'status' => 3,
-            ]);
+        $reasign['message'] = 'Tienes un ticket reasignado';
+        $notification = User::find($request->assigned_id);
+        $notification->notify(new TicketSent($reasign));
 
-            $commentary->assigned()->sync($id);
-
-            $commentary->assigned()->update([
-                'assigned_id' => $request->assigned_id,
-                'status' => 5,
-            ]);
-
-            $reasign['message'] = 'Tienes un ticket reasignado';
-
-            $notification = User::find($request->assigned_id);
-            $notification->notify(new TicketSent($reasign));
-
-            $data = [
-                'status' => 'success',
-                'code' => 200,
-                'message' => 'Ticket reasignado',
-                'commentary' => $commentary,
-            ];
-        endif;
-
-        return $data;
+        return [
+            'message' => 'Ticket reasignado',
+            'commentary' => $commentary,
+            'code' => 201
+        ];
     }
 }

@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\tickets;
 
-use Illuminate\Http\Request;
 use App\Repositories\Specialists;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateCommentRequest;
+use App\Http\Requests\FinishedTicketRequest;
+use App\Http\Requests\ReasignCommentRequest;
+use App\Models\Assign;
 
 class SpecialistController extends Controller
 {
@@ -23,7 +26,7 @@ class SpecialistController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    public function store(Request $request)
+    public function store(CreateCommentRequest $request)
     {
         $data = $this->specialist->createComment($request);
 
@@ -37,16 +40,16 @@ class SpecialistController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    public function update(Request $request, $id)
+    public function update(FinishedTicketRequest $request, Assign $asignacione)
     {
-        $data = $this->specialist->saveTicket($request, $id);
+        $data = $this->specialist->saveTicket($request, $asignacione);
 
         return response()->json($data, $data['code']);
     }
 
-    public function reasignTicket(Request $request, $id)
+    public function reasignTicket(ReasignCommentRequest $request, Assign $reasign)
     {
-        $data = $this->specialist->reassigned($request, $id);
+        $data = $this->specialist->reassigned($request, $reasign);
 
         return response()->json($data, $data['code']);
     }
