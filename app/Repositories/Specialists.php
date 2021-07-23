@@ -2,25 +2,24 @@
 
 namespace App\Repositories;
 
-use App\Helpers\JwtAuth;
 use App\Models\Assign;
 use App\Models\Commentary;
 use App\Models\User;
 use App\Notifications\TicketSent;
+use App\Services\SpecialistService;
 
 class Specialists implements SpecialistInterface
 {
-    private $token;
+    protected $service;
 
-    public function __construct()
+    public function __construct(SpecialistService $service)
     {
-        $this->token = request()->header('Authorization');
+        $this->service = $service;
     }
 
     public function getTickets()
     {
-        $jwt = new JwtAuth();
-        $decoded = $jwt->checkToken($this->token, true);
+        $decoded = $this->service->authToken();
 
         $allTickets = Assign::where([
             'assigned_id' => $decoded->sub,
@@ -34,7 +33,7 @@ class Specialists implements SpecialistInterface
 
         return [
             'tickets' => $allTickets,
-            'code' => 201
+            'code' => 201,
         ];
     }
 
@@ -47,7 +46,7 @@ class Specialists implements SpecialistInterface
         return [
             'message' => 'Seguimiento creado.',
             'commentary' => $commentary,
-            'code' => 201
+            'code' => 201,
         ];
     }
 
@@ -62,38 +61,17 @@ class Specialists implements SpecialistInterface
             ->whereIn('status', [2, 3, 5, 6])
             ->find($id);
 
-        $jwt = new JwtAuth();
-        $decoded = $jwt->checkToken($this->token, true);
-
-        if (!$specialist):
-            return [
-                'message' => 'No existe el ticket',
-                'code' => 404,
-            ];
-        endif;
-
-        if ($specialist->assigned_id !== $decoded->sub):
-            return [
-                'message' => 'No tienes permiso para ejecutar esta accion',
-                'code' => 401,
-            ];
-        endif;
-
-        return [
-            'ticket' => $specialist,
-            'code' => 201
-        ];
+        return $this->service->authComments($specialist);
     }
 
     public function saveTicket($request, $asignacione)
     {
-        $jwt = new JwtAuth();
-        $decoded = $jwt->checkToken($this->token, true);
+        $decoded = $this->service->authToken();
 
         if ($asignacione->assigned_id !== $decoded->sub):
             return [
                 'message' => 'No tienes permiso para ejecutar esta accion',
-                'code' => 401
+                'code' => 401,
             ];
         endif;
 
@@ -101,13 +79,13 @@ class Specialists implements SpecialistInterface
             'status_id' => $request->status_id,
             'modulo_id' => $request->modulo_id,
             'solution_id' => $request->solution_id,
-            'status' => 4
+            'status' => 4,
         ]);
 
         $commentary = Commentary::create([
             'description' => $request->description,
             'assigned_id' => $asignacione->assigned_id,
-            'status' => 2
+            'status' => 2,
         ]);
 
         $commentary->assigned()->sync($asignacione->id);
@@ -122,13 +100,12 @@ class Specialists implements SpecialistInterface
 
     public function reassigned($request, $reasign)
     {
-        $jwt = new JwtAuth();
-        $decoded = $jwt->checkToken($this->token, true);
+        $decoded = $this->service->authToken();
 
         if ($reasign->assigned_id !== $decoded->sub):
             return [
                 'message' => 'No tienes permiso para ejecutar esta accion',
-                'code' => 401
+                'code' => 401,
             ];
         endif;
 
@@ -140,7 +117,7 @@ class Specialists implements SpecialistInterface
         $commentary->assigned()->sync($reasign->id);
         $commentary->assigned()->update([
             'assigned_id' => $request->assigned_id,
-            'status' => 5
+            'status' => 5,
         ]);
 
         $reasign['message'] = 'Tienes un ticket reasignado';
@@ -150,7 +127,7 @@ class Specialists implements SpecialistInterface
         return [
             'message' => 'Ticket reasignado',
             'commentary' => $commentary,
-            'code' => 201
+            'code' => 201,
         ];
     }
 }
