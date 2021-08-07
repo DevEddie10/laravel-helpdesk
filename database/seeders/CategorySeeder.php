@@ -14,9 +14,6 @@ class CategorySeeder extends Seeder
      */
     public function run()
     {
-        Category::factory()->create([
-            'name' => 'Falla de internet',
-            'description' => 'Presenta alguna falla de red',
-        ]);
+        Category::factory()->count(5)->create();
     }
 }
