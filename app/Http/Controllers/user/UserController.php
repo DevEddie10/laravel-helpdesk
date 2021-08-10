@@ -18,7 +18,7 @@ class UserController extends Controller
     {
         $users = User::orderBy('id', 'desc')
             ->with('roles')->get();
-
+            
         return response()->json(['users' => $users], 201);
     }
 
@@ -27,8 +27,10 @@ class UserController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make('admin_23'),
+            'password' => Hash::make('admin_23')
         ]);
+
+        $user->roles()->attach($request->role);
 
         return response()->json([
             'message' => 'Usuario creado correctamente.',
@@ -47,17 +49,21 @@ class UserController extends Controller
     {
         $usuario->update([
             'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'email' => $request->email
         ]);
 
-        return response()->json(['user' => $usuario]);
+        $usuario->roles()->sync($request->role);
+
+        return response()->json([
+            'message' => 'Usuario editado correctamente.',
+            'user' => $usuario
+        ], 201);
     }
 
     public function destroy(User $usuario)
     {
         $usuario->delete();
 
-        return response()->json(['message' => 'Se ha eliminado el usuario correctamente']);
+        return response()->json(['message' => 'Se ha eliminado el usuario correctamente'], 201);
     }
 }
