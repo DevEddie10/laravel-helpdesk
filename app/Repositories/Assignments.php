@@ -39,7 +39,7 @@ class Assignments implements AssignmentsInterface
             ->orderBy('id', 'desc')
             ->with(['user', 'category', 'medio', 'state', 'specialist', 'commentaries'])
             ->get(['id', 'user_id', 'category_id', 'media_id',
-                'state_id', 'assigned_id', 'description', 'status',
+                'state_id', 'assigned_id', 'description', 'status', 'created_at',
             ]);
     }
 
@@ -79,7 +79,7 @@ class Assignments implements AssignmentsInterface
                 'module', 'solution', 'commentaries.specialist'])
             ->first(['id', 'user_id', 'category_id', 'media_id',
                 'state_id', 'description', 'assigned_id',
-                'modulo_id', 'solution_id', 'status',
+                'modulo_id', 'solution_id', 'status', 'created_at',
             ]);
     }
 
@@ -121,5 +121,22 @@ class Assignments implements AssignmentsInterface
             'ticket' => $assigned,
             'code' => 201,
         ];
+    }
+
+    public function count()
+    {
+        $asignacion = Assign::whereStatus(2)->count();
+        $seguimiento = Assign::whereStatus(3)->count();
+        $cerrado = Assign::whereStatus(4)->count();
+        $terminado = Assign::whereStatus(7)->count();
+
+        return response()->json(
+            [
+                'asignado'    => $asignacion,
+                'seguimiento' => $seguimiento,
+                'cerrado'     => $cerrado,
+                'terminado'   => $terminado
+            ], 200
+        );
     }
 }

@@ -27,13 +27,13 @@ class Assign extends Model
     public function user()
     {
         return $this->belongsTo(User::class)
-            ->select(['id', 'name']);
+            ->select(['id', 'name', 'image']);
     }
 
     public function specialist()
     {
         return $this->belongsTo(User::class, 'assigned_id')
-            ->select(['id', 'name']);
+            ->select(['id', 'name', 'image']);
     }
 
     public function category()

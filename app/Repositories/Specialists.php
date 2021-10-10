@@ -28,7 +28,7 @@ class Specialists implements SpecialistInterface
             ->orderBy('created_at', 'desc')
             ->with(['user', 'category', 'medio', 'state'])
             ->get(['id', 'user_id', 'category_id', 'media_id',
-                'state_id', 'description', 'status',
+                'state_id', 'description', 'status', 'created_at',
             ]);
 
         return [

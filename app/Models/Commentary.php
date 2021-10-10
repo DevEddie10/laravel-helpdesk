@@ -23,6 +23,6 @@ class Commentary extends Model
     public function specialist()
     {
         return $this->belongsTo(User::class, 'assigned_id')
-            ->select(['id', 'name']);
+            ->select(['id', 'name', 'image']);
     }
 }

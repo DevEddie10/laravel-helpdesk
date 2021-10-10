@@ -74,4 +74,9 @@ class AssignedController extends Controller
 
         return response()->json($assigned, $assigned['code']);
     }
+
+    public function countTickets()
+    {
+        return $this->assignment->count();      
+    }
 }

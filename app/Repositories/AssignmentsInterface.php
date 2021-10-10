@@ -19,4 +19,6 @@ interface AssignmentsInterface
     public function reactivate($request, $id);
 
     public function finished($request, $id);
+
+    public function count();
 }
