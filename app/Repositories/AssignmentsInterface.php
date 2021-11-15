@@ -16,9 +16,9 @@ interface AssignmentsInterface
 
     public function endupTicket($id);
 
-    public function reactivate($request, $id);
+    public function reactivateTicket($request, $id);
 
-    public function finished($request, $id);
+    public function endTicket($request, $id);
 
-    public function count();
+    public function countTickets();
 }

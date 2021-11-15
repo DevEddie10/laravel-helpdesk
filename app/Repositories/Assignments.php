@@ -83,7 +83,7 @@ class Assignments implements AssignmentsInterface
             ]);
     }
 
-    public function reactivate($request, $assign)
+    public function reactivateTicket($request, $assign)
     {
         $assign->update(['status' => 6]);
 
@@ -103,7 +103,7 @@ class Assignments implements AssignmentsInterface
         ];
     }
 
-    public function finished($request, $assigned)
+    public function endTicket($request, $assigned)
     {
         $assigned->update(['status' => 7]);
 
@@ -123,7 +123,7 @@ class Assignments implements AssignmentsInterface
         ];
     }
 
-    public function count()
+    public function countTickets()
     {
         $asignacion = Assign::whereStatus(2)->count();
         $seguimiento = Assign::whereStatus(3)->count();

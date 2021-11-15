@@ -4,10 +4,8 @@ namespace App\Services;
 
 use App\Helpers\JwtAuth;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class UserService
 {
@@ -35,31 +33,13 @@ class UserService
             ->with('roles')->first();
     }
 
-    public function updateAuthUser($request, $usuario)
+    public function updateAuthUser($request, $user)
     {
-        $validated = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:50'],
-            'email' => [
-                'required', 'string', 'email', 'max:50',
-                Rule::unique('users', 'email')->ignore($usuario->id)
-            ],
-        ]);
-
-        if ($validated->fails()) {
-            return response()->json([
-                'message' => 'Todos los campos son obligatorios',
-                'errors' => $validated->errors(),
-            ], 404);
-        }
-
-        $usuario->update([
-            'name' => $request->name,
-            'email' => $request->email,
-        ]);
+        $user->update($request->all());
 
         return response()->json([
             'message' => 'Datos editados correctamente.',
-            'user' => $usuario->with('roles')->find($usuario->id),
+            'user' => $user->with('roles')->find($user->id),
         ], 201);
     }
 
@@ -76,9 +56,7 @@ class UserService
             ], 404);
         }
 
-        $user->update([
-            'password' => Hash::make($request->password)
-        ]);
+        $user->update($request->all());
 
         return response()->json([
             'message' => 'Contraseña editada correctamente',

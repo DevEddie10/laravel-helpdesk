@@ -26,6 +26,7 @@ class UserSeed extends Seeder
             ->create([
                 'name' => 'Daniel',
                 'email' => 'daniel@gmail.com',
+                'password' => 'admin_23',
             ]);
     }
 }
