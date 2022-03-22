@@ -19,21 +19,30 @@ class LoginController extends Controller
         ])->first();
 
         if (!$user):
-            return response()->json(['message' => 'Email incorrecto'], 404);
+            return response()->json([
+                'statusCode' => 401,
+                'error' => [
+                    'type' => 'Error de validación',
+                    'message' => 'Email incorrecta'
+                ]
+            ], 401);
         endif;
 
         if (Hash::check($request->password, $user->password)):
             $data = [
-                'token' => $jwtAuth->singup($user),
-                'code' => 201
+                'statusCode' => 200,
+                'token' => $jwtAuth->singup($user)
             ];
         else:
             $data = [
-                'message' => 'Contraseña incorrecta',
-                'code' => 404
+                'statusCode' => 401,
+                'error' => [
+                    'type' => 'Error de validación',
+                    'message' => 'Contraseña incorrecta'
+                ]
             ];
         endif;
 
-        return response()->json($data, $data['code']);
+        return response()->json($data, $data['statusCode']);
     }
 }

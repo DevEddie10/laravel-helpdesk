@@ -4,16 +4,15 @@ namespace App\Http\Controllers\user;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUserRequest;
+use App\Http\Resources\UserCollection;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = User::orderBy('id', 'desc')
-            ->with('roles')->get();
-
-        return response()->json(['users' => $users], 201);
+        return UserCollection::make(User::orderBy('id', 'desc')->with('roles')->get());
     }
 
     public function store(StoreUserRequest $request)
@@ -29,9 +28,12 @@ class UserController extends Controller
 
     public function show(User $usuario)
     {
+        $result = UserResource::make($usuario->with('roles')->find($usuario->id));
+
         return response()->json([
-            'user' => $usuario->with('roles')->find($usuario->id),
-        ]);
+            'statusCode' => 200,
+            'data' => $result,
+        ], 200);
     }
 
     public function update(User $usuario, StoreUserRequest $request)
